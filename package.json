@@ -1,0 +1,17 @@
+{
+  "name": "incoffee",
+  "version": "1.10.0",
+  "description": "",
+  "main": "incoffee.js",
+  "scripts": {
+    "test": "./test.js"
+  },
+  "author": "Greg Varsanyi",
+  "license": "MIT",
+  "dependencies": {
+    "coffee-script": "^1.10.0"
+  },
+  "bin": {
+    "incoffee": "bin/incoffee"
+  }
+}
