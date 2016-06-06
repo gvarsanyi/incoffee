@@ -1,2 +1,2 @@
-require('./node_modules/coffee-script/register');
+require('coffee-script/register');
 require('./lib/in.coffee');

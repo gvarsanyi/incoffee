@@ -1,7 +1,7 @@
 fs   = require 'fs'
 path = require 'path'
 
-CoffeeScript = require '../node_modules/coffee-script'
+CoffeeScript = require 'coffee-script'
 
 
 name_function = (fn, name, overwrite = false) ->
