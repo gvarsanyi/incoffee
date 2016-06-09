@@ -66,18 +66,33 @@ CoffeeScript._compileFile = (filename, sourceMap) ->
   replace '&', 'require'
   replace '<', 'include'
 
+  star_check = (name) ->
+    if name.substr(0, 1) is '*'
+      return 'include(\'' + name.substr(1) + '\')'
+    name
+
   for line, i in lines
     words = line.split ' '
     if words.length >= 4
       last_words = words[words.length - 4 ...]
       if last_words.length is 4 and last_words[0] is 'class' and last_words[2] is '<'
-        lines[i] = words[0 ... words.length - 2].join(' ') + ' extends include(\'' + last_words[3] + '\')' 
+        lines[i] = words[0 ... words.length - 2].join(' ') + ' extends ' + star_check(last_words[3]) 
 
   for line, i in lines
     if line.substr(0, 7) is 'export ' or line is 'export'
       lines[i] = 'module.exports = ' + line.substr 7
     else if line.substr(0, 2) is '> ' or line is '>'
       lines[i] = 'module.exports = ' + line.substr 2
+
+  for line, i in lines
+    if line.trim().substr(0, 2) is '<-' and word = line.split('<-')[1].trim()
+      if (parts = word.split('::')).length is 2
+        lines[i] = line.split('<-')[0] + parts[1] + ': ' + star_check(parts[0]) + '::' + parts[1]
+      if (parts = word.split('.')).length is 2
+        lines[i] = line.split('<-')[0] + '@' + parts[1] + ': ' + star_check(parts[0]) + '.' + parts[1]
+    if line.trim().substr(0, 2) is '<=' and word = line.split('<=')[1].trim()
+      if (parts = word.split('::')).length is 2
+        lines[i] = line.split('<=')[0] + parts[1] + ': => ' + star_check(parts[0]) + '::' + parts[1] + '.call(@, arguments)'
 
   literate = CoffeeScript.helpers.isLiterate filename
   CoffeeScript.compile lines.join('\n'), {filename, sourceMap, literate}
