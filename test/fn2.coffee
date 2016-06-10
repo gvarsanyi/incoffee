@@ -1,2 +1,2 @@
-> ->
+module.exports = ->
   'fn2'

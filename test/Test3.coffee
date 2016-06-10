@@ -1,4 +1,5 @@
-export class Test3
+
+module.exports = class Test3
   @yeah1: ->
     'classy'
   yeah2: ->
