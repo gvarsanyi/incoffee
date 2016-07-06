@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('./incoffee.js');
+require('../incoffee.js');
 
 var T = include('Test');
 
@@ -43,4 +43,21 @@ try {
 }
 if (shouldBeFalse) {
   throw new Error('unexpected result: obj2');
+}
+
+try {
+  include('ext');
+  shouldBeFalse = true;
+} catch (err) {
+  // all right
+}
+if (shouldBeFalse) {
+  throw new Error('unexpected result: ext');
+}
+
+include.load_dir(__dirname + '/../test2');
+
+ext = include('ext');
+if (ext() !== 'ext') {
+  throw new Error('unexpected result: ext');
 }

@@ -16,21 +16,34 @@ unless include_root.substr(include_root.length - 1) is '/'
   global.include_root += '/'
 
 coffee_map = {}
-recursive_dir = (dir) ->
-  for node in fs.readdirSync include_root + dir
-    full_path = include_root + (if dir then dir + '/' else '') + node
-    pos = node.indexOf '.coffee'
-    if pos > 0 and node.length - 7 is pos
-      name = node.substr 0, pos
-      parts = (if dir then dir + '/' + name else name).split '/'
-      for part, i in parts
-        id = parts[i ...].join '/'
-        (coffee_map[id] ?= []).push full_path
-    if node isnt 'node_modules' and fs.lstatSync(full_path).isDirectory()
-      recursive_dir (if dir then dir + '/' + node else node)
+
+load_dir = (root) ->
+  unless root.substr(root.length - 1) is '/'
+    root += '/'
+
+  unless fs.existsSync root
+    throw new Error 'directory does not exist: ' + root
+  unless fs.lstatSync(root).isDirectory()
+    throw new Error 'not a directory: ' + root
+
+  recursive_dir = (dir) ->
+    for node in fs.readdirSync root + dir
+      full_path = root + (if dir then dir + '/' else '') + node
+      pos = node.indexOf '.coffee'
+      if pos > 0 and node.length - 7 is pos
+        name = node.substr 0, pos
+        parts = (if dir then dir + '/' + name else name).split '/'
+        for part, i in parts
+          id = parts[i ...].join '/'
+          (coffee_map[id] ?= []).push full_path
+      if node isnt 'node_modules' and fs.lstatSync(full_path).isDirectory()
+        recursive_dir (if dir then dir + '/' + node else node)
+    return
+
+  recursive_dir ''
   return
 
-recursive_dir ''
+load_dir include_root
 
 global.include = (name) ->
   unless coffee_map[name]
@@ -42,5 +55,6 @@ global.include = (name) ->
 
 global.include.map = coffee_map
 
+global.include.load_dir = load_dir
 
 name_function global.include, 'include'
