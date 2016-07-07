@@ -21,9 +21,8 @@ load_dir = (root) ->
   unless root.substr(root.length - 1) is '/'
     root += '/'
 
-  unless fs.existsSync root
-    throw new Error 'directory does not exist: ' + root
-  unless fs.lstatSync(root).isDirectory()
+  try stat = fs.lstatSync root
+  unless stat?.isDirectory()
     throw new Error 'not a directory: ' + root
 
   recursive_dir = (dir) ->
