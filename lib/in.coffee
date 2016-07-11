@@ -9,18 +9,10 @@ class InCoffee
   map:     {}   # {module_name: 'file'} style hashmap. modules will be replicated, as in: `str` and `helpers/str` will both appear for `helpers/str.coffee`
   root:    null # project root
 
-
   constructor: ->
     @nameFunction @include, 'incoffee'
-
-    @root = path.dirname module.parent?.parent?.filename or __filename
-    unless @root.substr(@root.length - 1) is '/'
-      @root += '/'
-
-    @pull @root
-
+    @pull @updateRoot()
     @bindings()
-
 
   bindings: =>
     module.exports = global.incoffee = @incoffee
@@ -30,7 +22,6 @@ class InCoffee
     global.incoffee.pull   = @pull
     global.incoffee.root   = @root
     return
-
 
   incoffee: (name) =>
     unless @map[name]
@@ -44,14 +35,12 @@ class InCoffee
     # name the function (if unnamed) and return it
     @nameFunction mod, name.split('/').pop()
 
-
   nameFunction: (fn, name, overwrite = false) ->
     if typeof fn is 'function' and (overwrite or not fn.name)
       Object.defineProperty fn, 'name',
         configurable: true
         value:        name
     fn
-
 
   pull: (root, clear = false) =>
     unless root.substr(root.length - 1) is '/'
@@ -84,6 +73,26 @@ class InCoffee
     recursive_dir ''
     @loaded.push root
     return
+
+  updateRoot: =>
+    if path.basename(module.parent?.filename) is 'incoffee.js' and
+    path.basename(module.parent.parent?.filename) is 'incoffee' and
+    (not module.parent.parent.parent?) and
+    path.basename(process.argv[0]) is 'nodejs' and
+    path.basename(process.argv[1]) is 'incoffee' and
+    process.argv.length > 2
+      @root = path.dirname path.resolve process.cwd(), process.argv[2]
+    else if local = module.parent?.parent?.filename
+      @root = path.dirname local
+    else
+      @root = process.cwd()
+
+    @root = path.resolve @root
+
+    unless @root.substr(@root.length - 1) is '/'
+      @root += '/'
+
+    @root
 
 
 new InCoffee
