@@ -2,7 +2,7 @@
 
 require('../incoffee.js');
 
-var T = include('Test');
+var T = incoffee('Test');
 
 var t = new T;
 
@@ -36,7 +36,7 @@ if (t.path !== require('path')) {
 
 var shouldBeFalse = false;
 try {
-  include('obj');
+  incoffee('obj');
   shouldBeFalse = true;
 } catch (err) {
   // all right
@@ -46,7 +46,7 @@ if (shouldBeFalse) {
 }
 
 try {
-  include('ext');
+  incoffee('ext');
   shouldBeFalse = true;
 } catch (err) {
   // all right
@@ -55,9 +55,9 @@ if (shouldBeFalse) {
   throw new Error('unexpected result: ext');
 }
 
-include.load_dir(__dirname + '/../test2');
+incoffee.pull(__dirname + '/../test2');
 
-ext = include('ext');
+ext = incoffee('ext');
 if (ext() !== 'ext') {
   throw new Error('unexpected result: ext');
 }

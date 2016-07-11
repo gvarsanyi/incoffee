@@ -23,7 +23,7 @@ Lexer::jsToken = ->
   if word = condition INCLUDES...
     mods = []
     for mod in word.substr(2).split(',').join(' ').split(' ') when mod = mod.trim()
-      mods.push sane_name(mod) + ' = include(\'' + mod + '\')'
+      mods.push sane_name(mod) + ' = incoffee(\'' + mod + '\')'
     if mods.length
       return proc word, 'var ' + mods.join ', '
 
@@ -35,7 +35,7 @@ Lexer::jsToken = ->
       return proc word, 'var ' + mods.join ', '
 
   if word = condition INCLUDE...
-    return proc word, 'include(\'' + word.substr(1) + '\')'
+    return proc word, 'incoffee(\'' + word.substr(1) + '\')'
 
   if word = condition REQUIRE...
     return proc word, 'require(\'' + word.substr(1) + '\')'

@@ -3,57 +3,87 @@ require './lex'
 fs   = require 'fs'
 path = require 'path'
 
-name_function = (fn, name, overwrite = false) ->
-  if typeof fn is 'function' and (overwrite or not fn.name)
-    Object.defineProperty fn, 'name',
-      configurable: true
-      value:        name
-  fn
 
-global.include_root ?= path.dirname(module.parent?.parent?.filename or __filename)
+class InCoffee
+  loaded:  []   # array of loaded dirs. By default it is: [@root], but calling @pull(dir) may add to it or replace
+  map:     {}   # {module_name: 'file'} style hashmap. modules will be replicated, as in: `str` and `helpers/str` will both appear for `helpers/str.coffee`
+  root:    null # project root
 
-unless include_root.substr(include_root.length - 1) is '/'
-  global.include_root += '/'
 
-coffee_map = {}
+  constructor: ->
+    @nameFunction @include, 'incoffee'
 
-load_dir = (root) ->
-  unless root.substr(root.length - 1) is '/'
-    root += '/'
+    @root = path.dirname module.parent?.parent?.filename or __filename
+    unless @root.substr(@root.length - 1) is '/'
+      @root += '/'
 
-  try stat = fs.lstatSync root
-  unless stat?.isDirectory()
-    throw new Error 'not a directory: ' + root
+    @pull @root
 
-  recursive_dir = (dir) ->
-    for node in fs.readdirSync root + dir
-      full_path = root + (if dir then dir + '/' else '') + node
-      pos = node.indexOf '.coffee'
-      if pos > 0 and node.length - 7 is pos
-        name = node.substr 0, pos
-        parts = (if dir then dir + '/' + name else name).split '/'
-        for part, i in parts
-          id = parts[i ...].join '/'
-          (coffee_map[id] ?= []).push full_path
-      if node isnt 'node_modules' and fs.lstatSync(full_path).isDirectory()
-        recursive_dir (if dir then dir + '/' + node else node)
+    @bindings()
+
+
+  bindings: =>
+    module.exports = global.incoffee = @incoffee
+
+    global.incoffee.loaded = @loaded
+    global.incoffee.map    = @map
+    global.incoffee.pull   = @pull
+    global.incoffee.root   = @root
     return
 
-  recursive_dir ''
-  return
 
-load_dir include_root
+  incoffee: (name) =>
+    unless @map[name]
+      throw new Error 'No such includable: ' + name
 
-global.include = (name) ->
-  unless coffee_map[name]
-    throw new Error 'No such includable: ' + name
-  if coffee_map[name].length > 1
-    throw new Error 'Ambiguous includable: ' + name + ':\n  ? ' + coffee_map[name].join('\n  ? ')
-  mod = require coffee_map[name][0]
-  name_function mod, name.split('/').pop()
+    if @map[name].length > 1
+      throw new Error 'Ambiguous includable: ' + name + ':\n  ? ' + @map[name].join('\n  ? ')
 
-global.include.map = coffee_map
+    mod = require @map[name][0]
 
-global.include.load_dir = load_dir
+    # name the function (if unnamed) and return it
+    @nameFunction mod, name.split('/').pop()
 
-name_function global.include, 'include'
+
+  nameFunction: (fn, name, overwrite = false) ->
+    if typeof fn is 'function' and (overwrite or not fn.name)
+      Object.defineProperty fn, 'name',
+        configurable: true
+        value:        name
+    fn
+
+
+  pull: (root, clear = false) =>
+    unless root.substr(root.length - 1) is '/'
+      root += '/'
+
+    try stat = fs.lstatSync root
+    unless stat?.isDirectory()
+      throw new Error 'not a directory: ' + root
+
+    if clear
+      for own key of @map
+        delete @map[key]
+      while @loaded.length
+        @loaded.pop()
+
+    recursive_dir = (dir) =>
+      for node in fs.readdirSync root + dir
+        full_path = root + (if dir then dir + '/' else '') + node
+        pos = node.indexOf '.coffee'
+        if pos > 0 and node.length - 7 is pos
+          name = node.substr 0, pos
+          parts = (if dir then dir + '/' + name else name).split '/'
+          for part, i in parts
+            id = parts[i ...].join '/'
+            (@map[id] ?= []).push full_path
+        if node isnt 'node_modules' and fs.lstatSync(full_path).isDirectory()
+          recursive_dir (if dir then dir + '/' + node else node)
+      return
+
+    recursive_dir ''
+    @loaded.push root
+    return
+
+
+new InCoffee
