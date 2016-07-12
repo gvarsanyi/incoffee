@@ -4,7 +4,5 @@ var path = require('path');
 var fs   = require('fs');
 var lib  = path.join(path.dirname(fs.realpathSync(__filename)), '..');
 
-global.include_root = process.cwd();
-
 require(lib + '/incoffee.js');
 require('coffee-script/lib/coffee-script/command').run();
