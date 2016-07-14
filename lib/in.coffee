@@ -57,7 +57,7 @@ class InCoffee
         @loaded.pop()
 
     recursive_dir = (dir) =>
-      for node in fs.readdirSync root + dir
+      for node in fs.readdirSync root + dir when not (node.substr(0, 1) in ['.', '~', '!'])
         full_path = root + (if dir then dir + '/' else '') + node
         pos = node.indexOf '.coffee'
         if pos > 0 and node.length - 7 is pos
