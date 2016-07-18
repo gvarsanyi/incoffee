@@ -33,7 +33,7 @@ class InCoffee
     mod = require @map[name][0]
 
     # name the function (if unnamed) and return it
-    @nameFunction mod, name.split('/').pop()
+    @nameFunction mod, name.split(path.sep).join('/').split('/').pop()
 
   nameFunction: (fn, name, overwrite = false) ->
     if typeof fn is 'function' and (overwrite or not fn.name)
@@ -43,8 +43,8 @@ class InCoffee
     fn
 
   pull: (root, clear = false) =>
-    unless root.substr(root.length - 1) is '/'
-      root += '/'
+    unless root.substr(root.length - 1) in ['/', path.sep]
+      root += path.sep
 
     try stat = fs.lstatSync root
     unless stat?.isDirectory()
@@ -57,17 +57,18 @@ class InCoffee
         @loaded.pop()
 
     recursive_dir = (dir) =>
+      dir = dir.split('/').join path.sep
       for node in fs.readdirSync root + dir when not (node.substr(0, 1) in ['.', '~', '!'])
-        full_path = root + (if dir then dir + '/' else '') + node
+        full_path = root + (if dir then dir + path.sep else '') + node
         pos = node.indexOf '.coffee'
         if pos > 0 and node.length - 7 is pos
           name = node.substr 0, pos
-          parts = (if dir then dir + '/' + name else name).split '/'
+          parts = (if dir then dir + path.sep + name else name).split path.sep
           for part, i in parts
-            id = parts[i ...].join '/'
+            id = parts[i ...].join path.sep
             (@map[id] ?= []).push full_path
         if node isnt 'node_modules' and fs.lstatSync(full_path).isDirectory()
-          recursive_dir (if dir then dir + '/' + node else node)
+          recursive_dir (if dir then dir + path.sep + node else node)
       return
 
     recursive_dir ''
@@ -89,8 +90,8 @@ class InCoffee
 
     @root = path.resolve @root
 
-    unless @root.substr(@root.length - 1) is '/'
-      @root += '/'
+    unless @root.substr(@root.length - 1) in ['/', path.sep]
+      @root += path.sep
 
     @root
 
