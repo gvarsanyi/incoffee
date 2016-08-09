@@ -65,7 +65,7 @@ class InCoffee
           name = node.substr 0, pos
           parts = (if dir then dir + path.sep + name else name).split path.sep
           for part, i in parts
-            id = parts[i ...].join path.sep
+            id = parts[i ...].join '/'
             (@map[id] ?= []).push full_path
         if node isnt 'node_modules' and fs.lstatSync(full_path).isDirectory()
           recursive_dir (if dir then dir + path.sep + node else node)
