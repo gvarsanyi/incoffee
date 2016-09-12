@@ -23,17 +23,25 @@ class InCoffee
     global.incoffee.root   = @root
     return
 
-  incoffee: (name) =>
-    unless @map[name]
-      throw new Error 'No such includable: ' + name
+  incoffee: (all_names) =>
+    count = 0
+    res = []
+    for names in all_names
+      for name in names.split ' '
+        count += 1
+        unless @map[name]
+          throw new Error 'No such includable: ' + name
 
-    if @map[name].length > 1
-      throw new Error 'Ambiguous includable: ' + name + ':\n  ? ' + @map[name].join('\n  ? ')
+        if @map[name].length > 1
+          throw new Error 'Ambiguous includable: ' + name + ':\n  ? ' + @map[name].join('\n  ? ')
 
-    mod = require @map[name][0]
+        mod = require @map[name][0]
 
-    # name the function (if unnamed) and return it
-    @nameFunction mod, name.split(path.sep).join('/').split('/').pop()
+        # name the function (if unnamed) and return it
+        res.push @nameFunction mod, name.split(path.sep).join('/').split('/').pop()
+    if count
+      return res[0]
+    res
 
   nameFunction: (fn, name, overwrite = false) ->
     if typeof fn is 'function' and (overwrite or not fn.name)
